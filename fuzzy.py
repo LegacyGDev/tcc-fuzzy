@@ -3,13 +3,19 @@ import matplotlib.pyplot as plt
 
 dataset = pandas.read_csv("Dads.csv", usecols=['Temperatura'])
 dataset = dataset['Temperatura']
-interval = max(dataset) - min(dataset)
 
-print(interval)
-
-def divide_into_fuzzy_regions(minimum,maximum,n):
+def divide_into_fuzzy_regions(variable,n):
     regions = []
-    interval = maximum - minimum
     num_regions = (2*n)+1
-    region_interval = interval/num_regions
+    interval = (min(variable),max(variable))
+    region_length = (interval[1] - interval[0])/num_regions
     for i in range(num_regions):
+        if(i==0):
+            regions.append((interval[0],interval[0],interval[0]+region_length))
+        elif(i==num_regions-1):
+            regions.append((interval[1]-region_length,interval[1],interval[1]))
+        else:
+            lower_bound = interval[0] + (region_length * (i-1))
+            regions.append( ( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length ) )
+    return regions
+
