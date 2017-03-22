@@ -1,5 +1,6 @@
 import pandas
 import matplotlib.pyplot as plt
+import skfuzzy as fuzz
 
 dataset = pandas.read_csv("Dads.csv", usecols=['Temperatura'])
 dataset = dataset['Temperatura']
@@ -19,3 +20,8 @@ def divide_into_fuzzy_regions(variable,n):
             regions.append( ( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length ) )
     return regions
 
+def determine_degrees(x,regions):
+    degrees = []
+    for r in regions:
+        degrees.append(fuzz.trimf(x,r))
+    return degrees
