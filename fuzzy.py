@@ -49,11 +49,17 @@ def determine_degrees_and_assign(x,regions):
     assignment[x] = regions[np.argmax(degrees)]
     return assignment
 
-def generate_fuzzy_rule(inputs,outputs,regions):
-	rule = []
-#	for i in inputs:
-#		for j in i:
-#			determine_degrees_and_assign(j,
+def determine_degrees_and_assign_and_label(x,regions):
+    degrees = {}
+    for k,v in regions.items():
+        degrees[k] = fuzz.trimf(np.asarray([x]),v)
+    print(degrees)
+    assignment = {}
+    max_key = max(degrees, key=lambda k: degrees[k])
+    assignment[x] = max_key
+    return assignment
 
-#fuzzy_rule_base = ctrl.ControlSystem()
-#fuzzy_rule_base.add( ctrl.Rule( inputs, outputs ) )
+#def generate_fuzzy_rule(inputs,outputs,regions):
+#    for i in inputs:
+#        for j in i:
+#            determine_degrees_and_assign(j,)
