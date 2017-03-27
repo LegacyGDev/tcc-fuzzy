@@ -1,3 +1,5 @@
 tcc/
 *.csv
 *.png
+*.xlsx
+*.xls

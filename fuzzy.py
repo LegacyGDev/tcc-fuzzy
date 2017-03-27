@@ -59,7 +59,23 @@ def determine_degrees_and_assign_and_label(x,regions):
     assignment[x] = max_key
     return assignment
 
-#def generate_fuzzy_rule(inputs,outputs,regions):
-#    for i in inputs:
-#        for j in i:
-#            determine_degrees_and_assign(j,)
+# inputs is a dictionary in which the keys are the name of them inputs
+# outputs is also a dictionary in which they keys are the name of them outputs
+# regions is a dict in which them keys are the same name as of them inputs
+def generate_fuzzy_rule(inputs,outputs,inputs_regions,outputs_regions):
+    antecedents = []
+    consequents = []
+    for i in inputs:
+        for j in i:
+            antecedents.append(determine_degrees_and_assign_and_label(j,inputs_regions[i]))
+    for o in outputs:
+        for p in o:
+            consequents.append(determine_degrees_and_assign_and_label(o,outputs_regions[p]))
+    rule = {'if': antecedents, 'then': consequents}
+    return rule
+
+#def remove_duplicate_rules(fuzzy_rule_base):
+#    for f in fuzzy_rule_base:
+#        for r in fuzzy_rule_base:
+#            if(r['if'] == f['if']):
+
