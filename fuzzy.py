@@ -3,9 +3,6 @@ import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 import numpy as np
 
-#dataset = pandas.read_csv("Dads.csv", usecols=['Temperatura'])
-#dataset = dataset['Temperatura']
-
 def divide_into_fuzzy_regions(variable,n):
     regions = []
     num_regions = (2*n)+1
@@ -53,29 +50,22 @@ def determine_degrees_and_assign_and_label(x,regions):
     degrees = {}
     for k,v in regions.items():
         degrees[k] = fuzz.trimf(np.asarray([x]),v)
-    print(degrees)
+    #print(degrees)
     assignment = {}
     max_key = max(degrees, key=lambda k: degrees[k])
     assignment[x] = max_key
     return assignment
 
-# inputs is a dictionary in which the keys are the name of them inputs
-# outputs is also a dictionary in which they keys are the name of them outputs
-# regions is a dict in which them keys are the same name as of them inputs
-def generate_fuzzy_rule(inputs,outputs,inputs_regions,outputs_regions):
+# input: {'1st_variable': [variable_regions,values], '2nd_variable': [variable_regions,values]}
+# current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
+def generate_fuzzy_rule(inputs,outputs):
     antecedents = []
     consequents = []
-    for i in inputs:
-        for j in i:
-            antecedents.append(determine_degrees_and_assign_and_label(j,inputs_regions[i]))
-    for o in outputs:
-        for p in o:
-            consequents.append(determine_degrees_and_assign_and_label(o,outputs_regions[p]))
+    for k,v in inputs.items():
+        for i in v[1]:
+            antecedents.append(determine_degrees_and_assign_and_label(i,v[0]))
+    for k,v in outputs.items():
+        for i in v[1]:
+            consequents.append(determine_degrees_and_assign_and_label(i,v[0]))
     rule = {'if': antecedents, 'then': consequents}
     return rule
-
-#def remove_duplicate_rules(fuzzy_rule_base):
-#    for f in fuzzy_rule_base:
-#        for r in fuzzy_rule_base:
-#            if(r['if'] == f['if']):
-
