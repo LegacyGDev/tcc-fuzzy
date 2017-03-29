@@ -57,16 +57,17 @@ def determine_degrees_and_assign_and_label(x,regions):
     return assignment
 
 # input: {'1st_variable': [variable_regions,values], '2nd_variable': [variable_regions,values]}
+# input: [(variable_regions,variable_values),(variable_regions,variable_values),(,)]
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
 def generate_fuzzy_rule(inputs,outputs):
     antecedents = []
     consequents = []
-    for k,v in inputs.items():
-        for i in v[1]:
-            antecedents.append(determine_degrees_and_assign_and_label(i,v[0]))
-    for k,v in outputs.items():
-        for i in v[1]:
-            consequents.append(determine_degrees_and_assign_and_label(i,v[0]))
+    for i in inputs:
+        for j in i[1]:
+            antecedents.append(determine_degrees_and_assign_and_label(j,i[0]))
+    for o in outputs:
+        for p in o[1]:
+            consequents.append(determine_degrees_and_assign_and_label(p,o[0]))
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
@@ -81,5 +82,12 @@ def generate_time_series_rule_base(data,num_regions=1,window=3,horizon=1):
     for i in range(window,observations,1):
         array_window.append(data[i-window:i])
         array_horizon.append(data[i+horizon])
-        rule_base.append( generate_fuzzy_rule({},{}) )
+        rule_base.append( generate_fuzzy_rule([],[]) )
     return rule_base
+
+#def clean_conflicting_rule_base(rule_base):
+#    for r in rule_base:
+#        rule_with_max_degree = r
+#        for b in rule_base:
+#            if(r['if'] == b['if']):
+
