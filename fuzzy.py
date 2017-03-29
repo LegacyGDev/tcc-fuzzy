@@ -72,17 +72,21 @@ def generate_fuzzy_rule(inputs,outputs):
     return rule
 
 def generate_time_series_rule_base(data,num_regions=1,window=3,horizon=1):
-    data_with_regions = []
+    data_regions = []
 #    for d in data:
 #        data_with_regions.append(d,divide_into_fuzzy_regions_and_label(d,num_regions))
+    for d,item in enumerate(data):
+        data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
     observations = len(data[0])
     array_window = []
     array_horizon = []
     rule_base = []
     for i in range(window,observations,1):
-        array_window.append(data[i-window:i])
-        array_horizon.append(data[i+horizon])
-        rule_base.append( generate_fuzzy_rule([],[]) )
+        print(data[:][i-window:i])
+        print(data[:][i+horizon])
+        array_window.append(data[:][i-window:i])
+        array_horizon.append(data[:][i+horizon])
+        rule_base.append( generate_fuzzy_rule([(array_window,data_regions)],[(array_horizon,data_regions)]) )
     return rule_base
 
 #def clean_conflicting_rule_base(rule_base):
