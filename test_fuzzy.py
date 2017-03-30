@@ -12,6 +12,7 @@ temp_min = temp_min.values
 temp_min = temp_min.astype('float32')
 temp_min = np.swapaxes(temp_min,0,1)
 
-print( np.concatenate((temp_max,temp_min)) )
+#print( np.concatenate((temp_max,temp_min)) )
 
 result = fuzzy.generate_time_series_rule_base(temp_min,num_regions=1,window=12,horizon=1,label=False)
+cleaned_result = fuzzy.clean_conflicting_rule_base(result)

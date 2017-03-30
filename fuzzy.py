@@ -93,8 +93,30 @@ def generate_time_series_rule_base(data,num_regions=1,window=3,horizon=1,label=T
         rule_base.append( generate_fuzzy_rule( [(data_regions[0],array_window)],[(data_regions[0],array_horizon)],label ))
     return rule_base
 
-#def clean_conflicting_rule_base(rule_base):
-#    for r in rule_base:
-#        rule_with_max_degree = r
-#        for b in rule_base:
-#            if(r['if'] == b['if']):
+def clean_conflicting_rule_base(rule_base):
+    new_rule_base = []
+    for r in rule_base:
+        rule_with_max_degree = r
+        for b in rule_base:
+            if(r['if'] == b['if'] and r['then'] != b['then']):
+                deg_r, deg_b = 1,1
+                for ant in r['if']:
+                    for k,v in ant.items():
+                        #print("k{} and v{}".format(k,v))
+                        deg_r *= fuzz.trimf(np.asarray([k]),v)
+                for con in r['then']:
+                    for k,v in con.items():
+                        deg_r *= fuzz.trimf(np.asarray([k]),v)
+                for ant in b['if']:
+                    for k,v in ant.items():
+                        deg_b *= fuzz.trimf(np.asarray([k]),v)
+                for con in b['then']:
+                    for k,v in con.items():
+                        deg_b *= fuzz.trimf(np.asarray([k]),v)
+                #print("{} and {}".format(deg_r,deg_b))
+                if deg_r >= deg_b:
+                    rule_with_max_degree = r
+                else:
+                    rule_with_max_degree = b
+        new_rule_base.append(rule_with_max_degree)
+    return new_rule_base
