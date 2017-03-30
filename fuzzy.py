@@ -59,33 +59,42 @@ def determine_degrees_and_assign_and_label(x,regions):
 # input: {'1st_variable': [variable_regions,values], '2nd_variable': [variable_regions,values]}
 # current_input: [(variable_regions,variable_values),(variable_regions,variable_values),(,)]
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
-def generate_fuzzy_rule(inputs,outputs):
+def generate_fuzzy_rule(inputs,outputs,label=True):
     antecedents = []
     consequents = []
     for i in inputs:
         for j in i[1]:
-            antecedents.append(determine_degrees_and_assign_and_label(j,i[0]))
+            if label:
+                antecedents.append(determine_degrees_and_assign_and_label(j,i[0]))
+            else:
+                antecedents.append(determine_degrees_and_assign(j,i[0]))
     for o in outputs:
         for p in o[1]:
-            consequents.append(determine_degrees_and_assign_and_label(p,o[0]))
+            if label:
+                consequents.append(determine_degrees_and_assign_and_label(p,o[0]))
+            else:
+                consequents.append(determine_degrees_and_assign(p,o[0]))
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
 def generate_time_series_rule_base(data,num_regions=1,window=3,horizon=1,label=True):
     data_regions = []
     for d,item in enumerate(data):
-        data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+        if label:
+            data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+        else:
+            data_regions.append(divide_into_fuzzy_regions(item,num_regions))
     observations = len(data[0])
     rule_base = []
     for i in range(window,observations-horizon,1):
         array_window = data[:,i-window:i]
         array_window = np.ravel(array_window)
         array_horizon = data[:,i+horizon]
-        rule_base.append( generate_fuzzy_rule( [(data_regions[0],array_window)],[(data_regions[0],array_horizon)] ))
+        rule_base.append( generate_fuzzy_rule( [(data_regions[0],array_window)],[(data_regions[0],array_horizon)],label ))
     return rule_base
 
-def clean_conflicting_rule_base(rule_base):
-    for r in rule_base:
-        rule_with_max_degree = r
+#def clean_conflicting_rule_base(rule_base):
+#    for r in rule_base:
+#        rule_with_max_degree = r
 #        for b in rule_base:
-#            if(r['if'] == b['if']):        
+#            if(r['if'] == b['if']):
