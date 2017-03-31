@@ -56,7 +56,6 @@ def determine_degrees_and_assign_and_label(x,regions):
     assignment[x] = max_key
     return assignment
 
-# input: {'1st_variable': [variable_regions,values], '2nd_variable': [variable_regions,values]}
 # current_input: [(variable_regions,variable_values),(variable_regions,variable_values),(,)]
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
 def generate_fuzzy_rule(inputs,outputs,label=True):
@@ -77,20 +76,42 @@ def generate_fuzzy_rule(inputs,outputs,label=True):
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
-def generate_time_series_rule_base(data,num_regions=1,window=3,horizon=1,label=True):
-    data_regions = []
-    for d,item in enumerate(data):
+def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3,horizon=1,label=True):
+    input_data_regions = []
+    output_data_regions = []
+    for d,item in enumerate(input_data):
         if label:
-            data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+            input_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
         else:
-            data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    observations = len(data[0])
+            input_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
+    for d,item in enumerate(output_data):
+        if label:
+            output_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+        else:
+            output_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
+    # separate into input
+    inputs = []
+    
+    # separate into output
+    outputs = []
+    
+    observations = len(input_data[0])
+    print(observations)
     rule_base = []
+    print(output_data_regions)
     for i in range(window,observations-horizon,1):
-        array_window = data[:,i-window:i]
-        array_window = np.ravel(array_window)
-        array_horizon = data[:,i+horizon]
-        rule_base.append( generate_fuzzy_rule( [(data_regions[0],array_window)],[(data_regions[0],array_horizon)],label ))
+        print(i)
+        array_window = input_data[:,i-window:i]
+        #print(array_window)
+        array_horizon = output_data[:,i]
+        #print(array_horizon)
+        for j,items in enumerate(array_window):
+            inputs.append( (input_data_regions[j],items) )
+        for j,items in enumerate(array_horizon):
+            outputs.append( (output_data_regions[j],np.asarray([items])) )
+        #print(inputs[0][1][0])
+        #print(outputs[0][1])
+        rule_base.append( generate_fuzzy_rule( inputs,outputs,label ))
     return rule_base
 
 def clean_conflicting_rule_base(rule_base):
