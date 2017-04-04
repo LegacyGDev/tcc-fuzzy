@@ -54,7 +54,6 @@ def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
     degrees = {}
     for k,v in regions.items():
         degrees[k] = fuzz.trimf(np.asarray([x]),v)
-    #print(degrees)
     assignment = {}
     max_key = max(degrees, key=lambda k: degrees[k])
     if only_regions:
@@ -63,8 +62,7 @@ def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
         assignment[x] = max_key
         return assignment
 
-# current_input: [(variable_regions,variable_values),(variable_regions,variable_values),(,)]
-# maybe_new_input: (array_of_values,array_of_regions)
+# current_input: (array_of_values,array_of_regions)
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
 def generate_fuzzy_rule(inputs,outputs,label=True,only_regions=False):
     antecedents = []
@@ -80,18 +78,6 @@ def generate_fuzzy_rule(inputs,outputs,label=True,only_regions=False):
             consequents.append(determine_degrees_and_assign_and_label(item,outputs[1][o],only_regions))
         else:
             consequents.append(determine_degrees_and_assign(item,outputs[1][o],only_regions))
-#    for i in inputs:
-#        for j in i[1]:
-#            if label:
-#                antecedents.append(determine_degrees_and_assign_and_label(j,i[0]))
-#            else:
-#                antecedents.append(determine_degrees_and_assign(j,i[0]))
-#    for o in outputs:
-#        for p in o[1]:
-#            if label:
-#                consequents.append(determine_degrees_and_assign_and_label(p,o[0]))
-#            else:
-#                consequents.append(determine_degrees_and_assign(p,o[0]))
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
@@ -108,28 +94,14 @@ def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3
             output_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
         else:
             output_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    # separate into input
     inputs = []
-    
-    # separate into output
     outputs = []
-    
     observations = len(input_data[0])
-    #print(observations)
     rule_base = []
-    #print(output_data_regions)
     for i in range(window,observations-horizon,1):
         print(i)
         array_window = input_data[:,i-window:i]
-        #print(array_window)
         array_horizon = output_data[:,i]
-        #print(array_horizon)
-        #for j,items in enumerate(array_window):
-        #    inputs.append( (input_data_regions[j],items) )
-        #for j,items in enumerate(array_horizon):
-        #    outputs.append( (output_data_regions[j],np.asarray([items])) )
-        #print(inputs[0][1][0])
-        #print(outputs[0][1])
         rule_base.append( generate_fuzzy_rule( (array_window,input_data_regions),(array_horizon,output_data_regions),label,only_regions ))
     return rule_base
 
@@ -142,7 +114,6 @@ def clean_conflicting_rule_base(rule_base):
                 deg_r, deg_b = 1,1
                 for ant in r['if']:
                     for k,v in ant.items():
-                        #print("k{} and v{}".format(k,v))
                         deg_r *= fuzz.trimf(np.asarray([k]),v)
                 for con in r['then']:
                     for k,v in con.items():
@@ -153,7 +124,6 @@ def clean_conflicting_rule_base(rule_base):
                 for con in b['then']:
                     for k,v in con.items():
                         deg_b *= fuzz.trimf(np.asarray([k]),v)
-                #print("{} and {}".format(deg_r,deg_b))
                 if deg_r >= deg_b:
                     rule_with_max_degree = r
                 else:
