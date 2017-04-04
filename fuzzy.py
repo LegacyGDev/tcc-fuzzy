@@ -42,25 +42,21 @@ def determine_degrees_and_assign(x,regions,only_regions=False):
     degrees = []
     for r in regions:
     	degrees.append(fuzz.trimf(np.asarray([x]),r))
-    assignment = {}
     max_value = regions[np.argmax(degrees)]
-    if only_region:
+    if only_regions:
         return max_value
     else:
-        assignment[x] = regions[np.argmax(degrees)]
-        return assignment
+        return (x,regions[np.argmax(degrees)])
 
 def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
     degrees = {}
     for k,v in regions.items():
         degrees[k] = fuzz.trimf(np.asarray([x]),v)
-    assignment = {}
     max_key = max(degrees, key=lambda k: degrees[k])
     if only_regions:
         return max_key
     else:
-        assignment[x] = max_key
-        return assignment
+        return (x,max_key)
 
 # current_input: (array_of_values,array_of_regions)
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
