@@ -95,7 +95,7 @@ def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3
     observations = len(input_data[0])
     rule_base = []
     for i in range(window,observations-horizon,1):
-        print(i)
+        #print(i)
         array_window = input_data[:,i-window:i]
         array_horizon = output_data[:,i]
         rule_base.append( generate_fuzzy_rule( (array_window,input_data_regions),(array_horizon,output_data_regions),label,only_regions ))
@@ -126,3 +126,22 @@ def clean_conflicting_rule_base(rule_base):
                     rule_with_max_degree = b
         new_rule_base.append(rule_with_max_degree)
     return new_rule_base
+
+def fuzzy_inference(inputs,rule_base):
+    aux = []
+    flattened_input = np.ravel(inputs)
+    for rule in rule_base:
+        for i,ant in enumerate(rule['if']):
+            aux.append(fuzz.trimf(np.asarray([flattened_input[i]]),ant[1]))
+        single = min(aux)
+        #for i,con in enumerate(rule['then']):
+    return aux
+
+
+def time_series_fuzzy_inference(inputs,rule_base,window=3):
+    output_data = []
+    observations = len(inputs[0])
+    for i in range(window,observations,1):
+        array_window = inputs[:,i-window:i]
+        output_data.append(fuzzy_inference(array_window,rule_base))
+    return output_data
