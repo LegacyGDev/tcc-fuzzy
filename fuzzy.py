@@ -102,28 +102,36 @@ def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3
     return rule_base
 
 def clean_conflicting_rule_base(rule_base):
-    new_rule_base = []
+    rule_base_without_pair = []
+    aux = {}
     for r in rule_base:
-        rule_with_max_degree = r
-        for b in rule_base:
-            if(r['if'] == b['if'] and r['then'] != b['then']):
+        aux['if'] = [rule[1] for rule in r['if']]
+        aux['then'] = [rule[1] for rule in r['then']]
+        rule_base_without_pair.append(aux)
+    new_rule_base = []
+    for i,rule in enumerate(rule_base_without_pair):
+        print(rule)
+        rule_with_max_degree = rule
+        for j,bule in enumerate(rule_base_without_pair):
+            print(bule)
+            if(rule['if'] == bule['if'] and rule['then'] != bule['then']):
                 deg_r, deg_b = 1,1
-                for ant in r['if']:
-                    for k,v in ant.items():
-                        deg_r *= fuzz.trimf(np.asarray([k]),v)
-                for con in r['then']:
-                    for k,v in con.items():
-                        deg_r *= fuzz.trimf(np.asarray([k]),v)
-                for ant in b['if']:
-                    for k,v in ant.items():
-                        deg_b *= fuzz.trimf(np.asarray([k]),v)
-                for con in b['then']:
-                    for k,v in con.items():
-                        deg_b *= fuzz.trimf(np.asarray([k]),v)
+                for ant in rule['if']:
+                    for k,content in enumerate(ant):
+                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),content)
+                for con in rule['then']:
+                    for k,content in enumerate(con):
+                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),content)
+                for ant in bule['if']:
+                    for k,content in enumerate(ant):
+                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),content)
+                for con in bule['then']:
+                    for k,content in enumerate(con):
+                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),content)
                 if deg_r >= deg_b:
-                    rule_with_max_degree = r
+                    rule_with_max_degree = rule
                 else:
-                    rule_with_max_degree = b
+                    rule_with_max_degree = bule
         new_rule_base.append(rule_with_max_degree)
     return new_rule_base
 

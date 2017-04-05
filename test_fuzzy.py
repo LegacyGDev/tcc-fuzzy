@@ -30,9 +30,9 @@ train_temp_max, test_temp_max = temp_max[:,0:train_size], temp_max[:,train_size:
 train_umidade_media, test_umidade_media = umidade_media[:,0:train_size], umidade_media[:,train_size:len(umidade_media[0])]
 train_precipitacao_total, test_precipitacao_total = precipitacao_total[:,0:train_size], precipitacao_total[:,train_size:len(precipitacao_total[0])]
 
-result = fuzzy.generate_time_series_rule_base( np.concatenate((train_temp_min,train_temp_max,train_umidade_media,train_precipitacao_total)), np.concatenate( (train_temp_min,train_temp_max) ) ,num_regions=1,window=12,horizon=1,label=False)
+result = fuzzy.generate_time_series_rule_base( np.concatenate((train_temp_min,train_temp_max,train_umidade_media,train_precipitacao_total)), np.concatenate( (train_temp_min,train_temp_max) ) ,num_regions=1,window=12,horizon=1,label=False,only_regions=False)
 cleaned_result = fuzzy.clean_conflicting_rule_base(result)
 
-print(len(cleaned_result))
+#print(len(cleaned_result))
 
-final = fuzzy.time_series_fuzzy_inference( np.concatenate((test_temp_min,test_temp_max,test_umidade_media,test_precipitacao_total)) ,cleaned_result,12)
+#final = fuzzy.time_series_fuzzy_inference( np.concatenate((test_temp_min,test_temp_max,test_umidade_media,test_precipitacao_total)) ,cleaned_result,12)
