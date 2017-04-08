@@ -95,11 +95,26 @@ def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3
     observations = len(input_data[0])
     rule_base = []
     for i in range(window,observations-horizon,1):
-        #print(i)
         array_window = input_data[:,i-window:i]
         array_horizon = output_data[:,i]
         rule_base.append( generate_fuzzy_rule( (array_window,input_data_regions),(array_horizon,output_data_regions),label,only_regions ))
     return rule_base
+
+def check_conflicting_rules(rule_base):
+    rule_base_without_pair = []
+    for r in rule_base:
+        rule_base_without_pair.append({'if': [rule[1] for rule in r['if']], 'then': [rule[1] for rule in r['then']]})
+    new_rule_base = []
+    aux = set()
+    conflicting_rules = []
+    for i, rule in enumerate(rule_base_without_pair):
+        for j, bule in enumerate(rule_base_without_pair):
+            if(rule['if'] == bule['if']):
+                aux.add(i)
+                aux.add(j)
+        conflicting_rules.append(aux)
+        aux.clear()
+    return conflicting_rules
 
 def clean_conflicting_rule_base(rule_base):
     rule_base_without_pair = []
