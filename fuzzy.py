@@ -132,11 +132,11 @@ def clean_conflicting_rule_base(rule_base):
                 for k,ant in enumerate(rule['if']):
                         deg_r *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
                 for k,con in enumerate(rule['then']):
-                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),ant)
+                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),con)
                 for k,ant in enumerate(bule['if']):
                         deg_b *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
                 for k,con in enumerate(bule['then']):
-                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),ant)
+                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),con)
                 if deg_r >= deg_b:
                     rule_with_max_degree = rule
                 else:
