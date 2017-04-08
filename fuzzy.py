@@ -110,29 +110,24 @@ def clean_conflicting_rule_base(rule_base):
         rule_base_without_pair.append(aux)
     new_rule_base = []
     for i,rule in enumerate(rule_base_without_pair):
-        print(rule)
         rule_with_max_degree = rule
         for j,bule in enumerate(rule_base_without_pair):
-            print(bule)
-            if(rule['if'] == bule['if'] and rule['then'] != bule['then']):
+            if(rule['if'] == bule['if']):
                 deg_r, deg_b = 1,1
-                for ant in rule['if']:
-                    for k,content in enumerate(ant):
-                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),content)
-                for con in rule['then']:
-                    for k,content in enumerate(con):
-                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),content)
-                for ant in bule['if']:
-                    for k,content in enumerate(ant):
-                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),content)
-                for con in bule['then']:
-                    for k,content in enumerate(con):
-                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),content)
+                for k,ant in enumerate(rule['if']):
+                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
+                for k,con in enumerate(rule['then']):
+                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),ant)
+                for k,ant in enumerate(bule['if']):
+                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
+                for k,con in enumerate(bule['then']):
+                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),ant)
                 if deg_r >= deg_b:
                     rule_with_max_degree = rule
                 else:
                     rule_with_max_degree = bule
         new_rule_base.append(rule_with_max_degree)
+        print(i)
     return new_rule_base
 
 def fuzzy_inference(inputs,rule_base):
