@@ -6,7 +6,7 @@ import numpy as np
 def divide_into_fuzzy_regions(variable,n,label=True):
     regions = []
     num_regions = (2*n)+1
-    interval = (min(variable),max(variable))
+    interval = (np.min(variable),np.max(variable))
     region_length = (interval[1] - interval[0])/n
     if label:
         for i in range(num_regions):
