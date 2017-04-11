@@ -11,17 +11,17 @@ def divide_into_fuzzy_regions(variable,n,label=True):
     if label:
         for i in range(num_regions):
             if(i==0):
-                regions["S{}".format(n)] = (interval[0],interval[0],interval[0]+(region_length/2))
+                regions.append( ("S{}".format(n),(interval[0],interval[0],interval[0]+(region_length/2))) )
             elif(i==num_regions-1):
-                regions["B{}".format(n)] = (interval[1]-(region_length/2),interval[1],interval[1])
+                regions.append( ("B{}".format(n),(interval[1]-(region_length/2),interval[1],interval[1])) )
             else:
                 lower_bound = interval[0] + ((region_length/2) * (i-1))
                 if(i < n):
-            	    regions["S{}".format(n-i)] = ( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )
+            	    regions.append( ("S{}".format(n-i),( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )) )
                 elif(i > n):
-            	    regions["B{}".format(i-n)] = ( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )
+            	    regions.append( ("B{}".format(i-n),( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )) )
                 elif(i == n):
-            	    regions["CE"] = ( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )
+            	    regions.append( ("CE",( lower_bound , lower_bound + (region_length/2) , lower_bound + region_length )) )
     else:
         for i in range(num_regions):
             if(i==0):
