@@ -66,7 +66,7 @@ def generate_fuzzy_rule(inputs,outputs,label=True,only_regions=False):
     for i,items in enumerate(inputs[0]):
         for j in items:
             if label:
-                antecedents.append(determine_degrees_and_assign_and_label(j,inputs[1][i]),only_regions)
+                antecedents.append(determine_degrees_and_assign_and_label(j,inputs[1][i],only_regions))
             else:
                 antecedents.append(determine_degrees_and_assign(j,inputs[1][i],only_regions))
     for o,item in enumerate(outputs[0]):
@@ -77,52 +77,41 @@ def generate_fuzzy_rule(inputs,outputs,label=True,only_regions=False):
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
-def generate_time_series_rule_base(input_data,output_data,num_regions=1,window=3,horizon=1,label=True,only_regions=False):
-    input_data_regions = []
-    output_data_regions = []
-    for d,item in enumerate(input_data):
-        if label:
-            input_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
-        else:
-            input_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    for d,item in enumerate(output_data):
-        if label:
-            output_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
-        else:
-            output_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    inputs = []
-    outputs = []
+def generate_time_series_rule_base(input_data,output_data,variable_regions,window=3,horizon=1):
+    #for d,item in enumerate(input_data):
+    #    if label:
+    #        input_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+    #    else:
+    #        input_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
+    #for d,item in enumerate(output_data):
+    #    if label:
+    #        output_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
+    #    else:
+    #        output_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
     observations = len(input_data[0])
     rule_base = []
     for i in range(window,observations-horizon,1):
         array_window = input_data[:,i-window:i]
         array_horizon = output_data[:,i]
-        rule_base.append( generate_fuzzy_rule( (array_window,input_data_regions),(array_horizon,output_data_regions),label,only_regions ))
+        rule_base.append( generate_fuzzy_rule( (array_window,variable_regions),(array_horizon,variable_regions),label,only_regions ))
     return rule_base
 
 def check_conflicting_rules(rule_base):
     rule_base_without_pair = []
     for r in rule_base:
         rule_base_without_pair.append({'if': [rule[1] for rule in r['if']], 'then': [rule[1] for rule in r['then']]})
-    new_rule_base = []
-    aux = set()
-    conflicting_rules = []
     for i, rule in enumerate(rule_base_without_pair):
         for j, bule in enumerate(rule_base_without_pair):
             if(rule['if'] == bule['if']):
-                aux.add(i)
-                aux.add(j)
-        conflicting_rules.append(aux)
-        aux.clear()
-    return conflicting_rules
+                if(i==j):
+                    print("{} itself".format(i))
+                else:
+                    print("{}:{}".format(i,j))
 
 def clean_conflicting_rule_base(rule_base):
     rule_base_without_pair = []
-    aux = {}
     for r in rule_base:
-        aux['if'] = [rule[1] for rule in r['if']]
-        aux['then'] = [rule[1] for rule in r['then']]
-        rule_base_without_pair.append(aux)
+        rule_base_without_pair.append({'if': [rule[1] for rule in r['if']],'then': [rule[1] for rule in r['then']]})
     new_rule_base = []
     for i,rule in enumerate(rule_base_without_pair):
         rule_with_max_degree = rule
