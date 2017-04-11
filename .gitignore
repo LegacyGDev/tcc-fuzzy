@@ -3,3 +3,4 @@ tcc/
 *.png
 *.xlsx
 *.xls
+__pycache__/
