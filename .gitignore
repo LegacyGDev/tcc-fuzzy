@@ -4,3 +4,4 @@ tcc/
 *.xlsx
 *.xls
 __pycache__/
+*.swp
