@@ -5,7 +5,7 @@ import math
 from keras.layers import Dense, Input
 from keras.models import Model
 import keras.layers.merge
-from sklearn.preprocessing import MinMaxScaler
+from LocalMinMaxScaler import MinMaxScaler
 from sklearn.metrics import mean_squared_error
 
 numpy.random.seed(7)
@@ -26,34 +26,19 @@ dataframe = pandas.read_csv('data_selection.csv', usecols=['PrecipitacaoTotal'],
 dataset_precipitacao_total = dataframe.values
 dataset_precipitacao_total = dataset_temp_min.astype('float32')
 
-# normalizar os dados
-def normalize(dataset):
-    new_data = []
-    x_min = min(dataset)
-    x_max = max(dataset)
-    y = x_max - x_min
-    z = y*0.2
-    maior = x_max + z
-    menor = x_min - z
-    for i in range(len(dataset)):
-        new_data.append( (dataset[i] - menor)/(maior-menor) )
-    return new_data
-
-#dataset_umidade_media = normalize(dataset_umidade_media)
-#dataset_temp_max = normalize(dataset_temp_max)
-#dataset_temp_min = normalize(dataset_temp_min)
-
 # criar escaladores
-umidade_media_scaler = MinMaxScaler(feature_range=(0,1))
-temp_max_scaler = MinMaxScaler(feature_range=(0,1))
-temp_min_scaler = MinMaxScaler(feature_range=(0,1))
-precipitacao_total_scaler = MinMaxScaler(feature_range=(0,1))
+umidade_media_scaler = MinMaxScaler()
+temp_max_scaler = MinMaxScaler()
+temp_min_scaler = MinMaxScaler()
+precipitacao_total_scaler = MinMaxScaler()
+
+safe_margin = 20
 
 # calcular máximos e mínimos e armazenar em cache os transformadores
-umidade_media_scaler = umidade_media_scaler.fit(dataset_umidade_media)
-temp_max_scaler = temp_max_scaler.fit(dataset_temp_max)
-temp_min_scaler = temp_min_scaler.fit(dataset_temp_min)
-precipitacao_total_scaler = precipitacao_total_scaler.fit(dataset_precipitacao_total)
+umidade_media_scaler = umidade_media_scaler.fit(dataset_umidade_media,safe_margin)
+temp_max_scaler = temp_max_scaler.fit(dataset_temp_max,safe_margin)
+temp_min_scaler = temp_min_scaler.fit(dataset_temp_min,safe_margin)
+precipitacao_total_scaler = precipitacao_total_scaler.fit(dataset_precipitacao_total,safe_margin)
 
 # transformar os dados (normalizacao)
 dataset_umidade_media = umidade_media_scaler.transform(dataset_umidade_media)
@@ -61,13 +46,16 @@ dataset_temp_max = temp_max_scaler.transform(dataset_temp_max)
 dataset_temp_min = temp_min_scaler.transform(dataset_temp_min)
 dataset_precipitacao_total = precipitacao_total_scaler.transform(dataset_precipitacao_total)
 
+look_back = 12
+num_neuronio_oculto = 15
+
 # split into train and test sets
 train_size = int(len(dataset_temp_max) * 0.7)
 test_size = len(dataset_temp_max) - train_size
-train_umidade_media, test_umidade_media = dataset_umidade_media[0:train_size,:], dataset_umidade_media[train_size:len(dataset_umidade_media),:]
-train_temp_max, test_temp_max = dataset_temp_max[0:train_size,:], dataset_temp_max[train_size:len(dataset_temp_max),:]
-train_temp_min, test_temp_min = dataset_temp_min[0:train_size,:], dataset_temp_min[train_size:len(dataset_temp_min),:]
-train_precipitacao_total, test_precipitacao_total = dataset_precipitacao_total[0:train_size,:], dataset_precipitacao_total[train_size:len(dataset_precipitacao_total),:]
+train_umidade_media, test_umidade_media = dataset_umidade_media[0:train_size,:], dataset_umidade_media[train_size-look_back:len(dataset_umidade_media),:]
+train_temp_max, test_temp_max = dataset_temp_max[0:train_size,:], dataset_temp_max[train_size-look_back:len(dataset_temp_max),:]
+train_temp_min, test_temp_min = dataset_temp_min[0:train_size,:], dataset_temp_min[train_size-look_back:len(dataset_temp_min),:]
+train_precipitacao_total, test_precipitacao_total = dataset_precipitacao_total[0:train_size,:], dataset_precipitacao_total[train_size-look_back:len(dataset_precipitacao_total),:]
 
 
 # convert an array of values into a dataset matrix
@@ -80,8 +68,7 @@ def create_dataset(dataset, look_back=1):
     return numpy.array(dataX), numpy.array(dataY)
 
 #  X=t and Y=t+1
-look_back = 12
-num_neuronio_oculto = 16
+
 
 # conjuntos de treinamento
 train_umidade_media_X, train_umidade_media_Y = create_dataset(train_umidade_media, look_back)
@@ -117,10 +104,10 @@ temp_min_output = Dense(1,activation=ativacao, name='temp_min_output')(x)
 
 model = Model(inputs=[umidade_media_input,temp_max_input,temp_min_input,precipitacao_total_input], outputs=[temp_max_output,temp_min_output])
 
-model.compile(loss='mean_squared_error', optimizer='sgd')
+model.compile(loss='mean_squared_error', optimizer=keras.optimizers.SGD(lr=0.05))
 
 
-model.fit({ 'umidade_media_input': train_umidade_media_X ,'temp_max_input': train_temp_max_X, 'temp_min_input': train_temp_min_X, 'precipitacao_total_input': train_precipitacao_total_X}, {'temp_max_output': train_temp_max_Y, 'temp_min_output': train_temp_min_Y}, epochs=200, verbose=2, batch_size=2)
+model.fit({ 'umidade_media_input': train_umidade_media_X ,'temp_max_input': train_temp_max_X, 'temp_min_input': train_temp_min_X, 'precipitacao_total_input': train_precipitacao_total_X}, {'temp_max_output': train_temp_max_Y, 'temp_min_output': train_temp_min_Y}, epochs=10000, verbose=2, batch_size=2)
 
 # funcao de convergencia por meio de early stopping
 def train_until_convergence(model,train_input,train_output):
@@ -153,17 +140,26 @@ testPredict = model.predict({'umidade_media_input':test_umidade_media_X,'temp_ma
 
 # inverter as predições
 # na saída de predict, [0] é temp_max e [1] é temp_min
-trainPredict[0] = temp_max_scaler.inverse_transform(trainPredict[0])
-trainPredict[1] = temp_min_scaler.inverse_transform(trainPredict[1])
+#trainPredict[0] = temp_max_scaler.inverse_transform(trainPredict[0])
+#trainPredict[1] = temp_min_scaler.inverse_transform(trainPredict[1])
 testPredict[0] = temp_max_scaler.inverse_transform(testPredict[0])
 testPredict[1] = temp_min_scaler.inverse_transform(testPredict[1])
 
 temp_max = numpy.ravel(testPredict[0])
 temp_min = numpy.ravel(testPredict[1])
 
-rng = pandas.date_range('12/2010',periods=67,freq='M')
+test_temp_max_Y = temp_max_scaler.inverse_transform([test_temp_max_Y])
+test_temp_min_Y = temp_min_scaler.inverse_transform([test_temp_min_Y])
 
-data = pandas.DataFrame({'temperatura maxima media':temp_max,'temperatura minima media':temp_min},index=rng)
+test_temp_max_Y = numpy.ravel(test_temp_max_Y)
+test_temp_min_Y = numpy.ravel(test_temp_min_Y)
+
+temp_max_absolute_error = numpy.absolute(test_temp_max_Y - temp_max)
+temp_min_absolute_error = numpy.absolute(test_temp_min_Y - temp_min)
+
+rng = pandas.date_range('11/2009',periods=79,freq='M')
+
+data = pandas.DataFrame({'temperatura maxima media prevista':temp_max,'temperatura minima media prevista':temp_min, 'temperatura maxima media real': test_temp_max_Y, 'temperatura minima media real': test_temp_min_Y, 'temp maxima media erro absoluto': temp_max_absolute_error, 'temp minima media erro absoluto': temp_min_absolute_error},index=rng)
 address = "all/{}.xlsx".format(num_neuronio_oculto)
 #data.to_csv(address)
 data.to_excel(address)
