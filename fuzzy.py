@@ -3,10 +3,12 @@ import matplotlib.pyplot as plt
 import skfuzzy as fuzz
 import numpy as np
 
-def divide_into_fuzzy_regions(variable,n,label=True):
+def divide_into_fuzzy_regions(variable,n,safe_margin=0,label=True):
     regions = []
     num_regions = (2*n)+1
-    interval = (np.min(variable),np.max(variable))
+    minmax = (np.min(variable),np.max(variable))
+    interval_length = minmax[1] - minmax[0]
+    interval = (np.min(variable) - (interval_length * (safe_margin/100)),np.max(variable) + (interval_length * (safe_margin/100)))
     region_length = (interval[1] - interval[0])/n
     if label:
         for i in range(num_regions):
@@ -45,8 +47,8 @@ def determine_degrees_and_assign(x,regions,only_regions=False):
 
 def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
     degrees = {}
-    for k,v in regions.items():
-        degrees[k] = fuzz.trimf(np.asarray([x]),v)
+    for r in regions:
+        degrees[r[0]] = fuzz.trimf(np.asarray([x]),r[1])
     max_key = max(degrees, key=lambda k: degrees[k])
     if only_regions:
         return max_key
@@ -55,40 +57,31 @@ def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
 
 # current_input: (array_of_values,array_of_regions)
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
-def generate_fuzzy_rule(inputs,outputs,label=True,only_regions=False):
+def generate_fuzzy_rule(inputs, outputs, regions, label=True, only_regions=False):
     antecedents = []
     consequents = []
-    for i,items in enumerate(inputs[0]):
-        for j in items:
+    for k,v in inputs.items():
+        for i in v[0]:
             if label:
-                antecedents.append(determine_degrees_and_assign_and_label(j,inputs[1][i],only_regions))
+                antecedents.append(determine_degrees_and_assign_and_label(i,regions[k],only_regions))
             else:
-                antecedents.append(determine_degrees_and_assign(j,inputs[1][i],only_regions))
-    for o,item in enumerate(outputs[0]):
+                antecedents.append(determine_degrees_and_assign(j,regions[k],only_regions))
+    for k,v in outputs.items():
         if label:
-            consequents.append(determine_degrees_and_assign_and_label(item,outputs[1][o],only_regions))
+            consequents.append(determine_degrees_and_assign_and_label(v[0],regions[k],only_regions))
         else:
-            consequents.append(determine_degrees_and_assign(item,outputs[1][o],only_regions))
+            consequents.append(determine_degrees_and_assign(v[0],regions[k],only_regions))
     rule = {'if': antecedents, 'then': consequents}
     return rule
 
-def generate_time_series_rule_base(input_data,output_data,variable_regions,window=3,horizon=1):
-    #for d,item in enumerate(input_data):
-    #    if label:
-    #        input_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
-    #    else:
-    #        input_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    #for d,item in enumerate(output_data):
-    #    if label:
-    #        output_data_regions.append(divide_into_fuzzy_regions_and_label(item,num_regions))
-    #    else:
-    #        output_data_regions.append(divide_into_fuzzy_regions(item,num_regions))
-    observations = len(input_data[0])
+def generate_time_series_rule_base(input_data, output_data, variable_regions, window=3, horizon=1, label=True, only_regions=False):
+    observations = len(next(iter(input_data.values()))[0])
     rule_base = []
     for i in range(window,observations-horizon,1):
-        array_window = input_data[:,i-window:i]
-        array_horizon = output_data[:,i]
-        rule_base.append( generate_fuzzy_rule( (array_window,variable_regions),(array_horizon,variable_regions),label,only_regions ))
+        #array_window = input_data[:,i-window:i]
+        #array_horizon = output_data[:,i]
+        rule_base.append( generate_fuzzy_rule({key: value[:,i-window:i] for (key,value) in input_data.items()}, {key: value[:,i] for (key,value) in output_data.items()}, variable_regions, label, only_regions) )
+        print(i)
     return rule_base
 
 def check_conflicting_rules(rule_base):
@@ -129,15 +122,22 @@ def clean_conflicting_rule_base(rule_base):
         print(i)
     return new_rule_base
 
-def fuzzy_inference(inputs,rule_base):
-    aux = []
-    flattened_input = np.ravel(inputs)
-    for rule in rule_base:
-        for i,ant in enumerate(rule['if']):
-            aux.append(fuzz.trimf(np.asarray([flattened_input[i]]),ant[1]))
-        single = min(aux)
-        #for i,con in enumerate(rule['then']):
-    return aux
+def fuzzy_inference(inputs, regions, rule_base):
+    # fuzzify inputs
+    fuzzified_inputs = []
+    for k,v in inputs.items():
+        for it in v:
+            fuzzified_inputs.append( [determine_degrees_and_assign_and_label(it,reg) for reg in regions[k]] )
+    clean_fuzzified_inputs = []
+    for i in fuzzified_inputs:
+        clean_fuzzified_inputs.append( [value for value in i if value!=0] )
+    perm = list(itertools.permutations(clean_fuzzified_inputs,len(clean_fuzzified_inputs)))
+    results = []
+#    for p in perm:
+#        for rule in rule_base:
+#            if p == rule['if']:
+                #get min of p and assign to fuzzy set of consequent of rule
+
 
 
 def time_series_fuzzy_inference(inputs,rule_base,window=3):

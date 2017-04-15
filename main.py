@@ -22,6 +22,12 @@ precipitacao_total = precipitacao_total.values
 precipitacao_total = precipitacao_total.astype('float32')
 precipitacao_total = np.swapaxes(precipitacao_total,0,1)
 
+# designate fuzzy regions from data
+temp_min_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_min,1)
+temp_max_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_max,1)
+umidade_media_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(umidade_media,1)
+precipitacao_total_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(precipitacao_total,1)
+
 # separar em conjuntos de treinamento e teste - método holdout
 train_size = int(len(temp_min[0]) * 0.7)
 test_size = len(temp_min[0]) - train_size
@@ -30,9 +36,4 @@ train_temp_max, test_temp_max = temp_max[:,0:train_size], temp_max[:,train_size:
 train_umidade_media, test_umidade_media = umidade_media[:,0:train_size], umidade_media[:,train_size:len(umidade_media[0])]
 train_precipitacao_total, test_precipitacao_total = precipitacao_total[:,0:train_size], precipitacao_total[:,train_size:len(precipitacao_total[0])]
 
-result = fuzzy.generate_time_series_rule_base( np.concatenate((train_temp_min,train_temp_max,train_umidade_media,train_precipitacao_total)), np.concatenate( (train_temp_min,train_temp_max) ) ,num_regions=1,window=12,horizon=1,label=False,only_regions=False)
-cleaned_result = fuzzy.clean_conflicting_rule_base(result)
-
-#print(len(cleaned_result))
-
-#final = fuzzy.time_series_fuzzy_inference( np.concatenate((test_temp_min,test_temp_max,test_umidade_media,test_precipitacao_total)) ,cleaned_result,12)
+result = fuzzy.generate_time_series_rule_base({'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': temp_min_fuzzy_regions, 'temp_max': temp_max_fuzzy_regions}, window=12, horizon=1, label=True, only_regions=False)
