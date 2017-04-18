@@ -152,27 +152,27 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     high_mf_degree = []
     low_mf = []
     low_mf_degree = []
-
     for f in fuzzified_inputs:
         if f[0][1] > f[1][1]:
             high_mf.append(f[0][0])
             high_mf_degree.append(f[0][1])
             low_mf.append(f[1][0])
-            low_mf.append(f[1][1])
+            low_mf_degree.append(f[1][1])
         else:
             high_mf.append(f[1][0])
             high_mf_degree.append(f[1][1])
             low_mf.append(f[0][0])
             low_mf_degree.append(f[0][1]) 
     # inference
+    #print(high_mf)
+    #print(low_mf)
     result = []
     for i in range(len(rule_base[0]['then'])):
         result.append([])
-    for choices in itertools.combinations([0,1],repeat=len(high_mf)):
-        for rule in rule_base:
-            if [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if']:
-                for i,con in rule['then']:
-                    result[i].append( con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)])) )
+    for choices in itertools.product([0,1],repeat=len(high_mf)):
+        if any( [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if'] for rule in rule_base):
+            for i,con in rule['then']:
+                result[i].append( con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)])) )
     # aggregation
     aggregated = []
     for i in outputs_names:

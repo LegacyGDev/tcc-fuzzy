@@ -22,11 +22,13 @@ precipitacao_total = precipitacao_total.values
 precipitacao_total = precipitacao_total.astype('float32')
 precipitacao_total = np.swapaxes(precipitacao_total,0,1)
 
+margem = 20
+qr = 3
 # designate fuzzy regions from data
-temp_min_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_min,1)
-temp_max_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_max,1)
-umidade_media_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(umidade_media,1)
-precipitacao_total_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(precipitacao_total,1)
+temp_min_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_min,qr,margem)
+temp_max_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(temp_max,qr,margem)
+umidade_media_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(umidade_media,qr,margem)
+precipitacao_total_fuzzy_regions = fuzzy.divide_into_fuzzy_regions(precipitacao_total,qr,margem)
 
 # separar em conjuntos de treinamento e teste - método holdout
 train_size = int(len(temp_min[0]) * 0.7)
@@ -39,3 +41,5 @@ train_precipitacao_total, test_precipitacao_total = precipitacao_total[:,0:train
 result = fuzzy.generate_time_series_rule_base({'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': temp_min_fuzzy_regions, 'temp_max': temp_max_fuzzy_regions}, window=12, horizon=1, label=True, only_regions=True)
 
 output_pred = fuzzy.time_series_fuzzy_inference({'temp_min': test_temp_min, 'temp_max': test_temp_max}, ['temp_min','temp_max'], {'temp_min': temp_min_fuzzy_regions, 'temp_max': temp_max_fuzzy_regions}, result, window=12)
+
+print(output_pred)
