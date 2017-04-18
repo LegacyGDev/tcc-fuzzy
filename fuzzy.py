@@ -1,6 +1,11 @@
 import numpy as np
 import progressbar
+import itertools
 import skfuzzy as fuzz
+
+# to be deleted
+import sys
+
 
 def divide_into_fuzzy_regions(variable,n,safe_margin=0,label=True):
     regions = []
@@ -124,16 +129,30 @@ def clean_conflicting_rule_base(rule_base):
         print(i)
     return new_rule_base
 
+
+def defuzz_coa(result, region):
+    dividend = 0
+    for r in result:
+        for reg in region:
+            if reg == r[0]:
+                dividend += (r[1]*reg[1][1])
+    divisor = 0
+    for r in result:
+        divisor += r[1]
+    return dividend/divisor
+
+
 def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     # fuzzify inputs
     fuzzified_inputs = []
     for k,v in inputs.items():
-        for it in v:
-            fuzzified_inputs.append( [(k,fuzz.trimf([it],reg)) for reg in regions[k] if fuzz.trimf([it],reg) != 0] )
+        for it in v[0]:
+            fuzzified_inputs.append( [(reg[0],fuzz.trimf(np.asarray([it]),reg[1])) for reg in regions[k] if fuzz.trimf(np.asarray([it]),reg[1]) != 0] )
     high_mf = []
     high_mf_degree = []
     low_mf = []
-    high_mf_degree = []
+    low_mf_degree = []
+
     for f in fuzzified_inputs:
         if f[0][1] > f[1][1]:
             high_mf.append(f[0][0])
@@ -149,32 +168,32 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     result = []
     for i in range(len(rule_base[0]['then'])):
         result.append([])
-    bar = progressbar.ProgressBar(maxval=2**len(high_mf), widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
-    bar.start()
     for choices in itertools.combinations([0,1],repeat=len(high_mf)):
         for rule in rule_base:
             if [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if']:
                 for i,con in rule['then']:
                     result[i].append( con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)])) )
-        bar.update()
-    bar.finish()
     # aggregation
     aggregated = []
     for i in outputs_names:
         aggregated.append([])
         for v in regions[i]:
             aggregated[i].append(v[0],max([r[1] for r in result[i] if r[0] == v[0]]))
-
     # defuzz
+    defuzzified_result = []
+    for i,agg in enumerate(aggregated):
+        defuzzified_result.append(defuzz_coa(agg,regions[i]))
     return defuzzified_result
 
 
-
-
-def time_series_fuzzy_inference(inputs,rule_base,window=3):
+def time_series_fuzzy_inference(inputs, outputs_names, regions, rule_base, window=3):
     output_data = []
-    observations = len(inputs[0])
+    observations = len(next(iter(inputs.values()))[0])
+    bar = progressbar.ProgressBar(maxval=observations, widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
+    bar.start()
     for i in range(window,observations,1):
-        array_window = inputs[:,i-window:i]
-        output_data.append(fuzzy_inference(array_window,rule_base))
+        #array_window = inputs[:,i-window:i]
+        output_data.append( fuzzy_inference({key: value[:,i-window:i] for (key,value) in inputs.items()}, outputs_names, regions, rule_base) )
+        bar.update(i)
+    bar.finish()
     return output_data
