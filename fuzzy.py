@@ -134,7 +134,7 @@ def defuzz_coa(result, region):
     dividend = 0
     for r in result:
         for reg in region:
-            if reg == r[0]:
+            if reg[0] == r[0]:
                 dividend += (r[1]*reg[1][1])
     divisor = 0
     for r in result:
@@ -170,19 +170,20 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     for i in range(len(rule_base[0]['then'])):
         result.append([])
     for choices in itertools.product([0,1],repeat=len(high_mf)):
-        if any( [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if'] for rule in rule_base):
-            for i,con in rule['then']:
-                result[i].append( con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)])) )
+        for rule in rule_base:
+            if [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if']:
+                for i,con in enumerate(rule['then']):
+                    result[i].append( (con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)]))) )
     # aggregation
     aggregated = []
-    for i in outputs_names:
+    for i,name in enumerate(outputs_names):
         aggregated.append([])
-        for v in regions[i]:
-            aggregated[i].append(v[0],max([r[1] for r in result[i] if r[0] == v[0]]))
+        for v in regions[name]:
+            aggregated[i].append( (v[0],max([r[1] for r in result[i] if r[0] == v[0]])) )
     # defuzz
     defuzzified_result = []
     for i,agg in enumerate(aggregated):
-        defuzzified_result.append(defuzz_coa(agg,regions[i]))
+        defuzzified_result.append(defuzz_coa(agg,regions[ outputs_names[i] ]))
     return defuzzified_result
 
 
