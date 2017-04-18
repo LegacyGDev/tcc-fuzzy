@@ -36,4 +36,4 @@ train_temp_max, test_temp_max = temp_max[:,0:train_size], temp_max[:,train_size:
 train_umidade_media, test_umidade_media = umidade_media[:,0:train_size], umidade_media[:,train_size:len(umidade_media[0])]
 train_precipitacao_total, test_precipitacao_total = precipitacao_total[:,0:train_size], precipitacao_total[:,train_size:len(precipitacao_total[0])]
 
-result = fuzzy.generate_time_series_rule_base({'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': temp_min_fuzzy_regions, 'temp_max': temp_max_fuzzy_regions}, window=12, horizon=1, label=True, only_regions=False)
+result = fuzzy.generate_time_series_rule_base({'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': train_temp_min, 'temp_max': train_temp_max}, {'temp_min': temp_min_fuzzy_regions, 'temp_max': temp_max_fuzzy_regions}, window=12, horizon=1, label=True, only_regions=True)
