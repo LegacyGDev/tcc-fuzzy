@@ -42,7 +42,7 @@ def divide_into_fuzzy_regions(variable,n,safe_margin=0,label=True):
 def determine_degrees_and_assign(x,regions,only_regions=False):
     degrees = []
     for r in regions:
-    	degrees.append(fuzz.trimf(np.asarray([x]),r))
+        degrees.append(fuzz.trimf(np.asarray([x]),r[1]))
     max_value = regions[np.argmax(degrees)]
     if only_regions:
         return max_value
@@ -57,7 +57,7 @@ def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
     if only_regions:
         return max_key
     else:
-        return (x,max_key)
+        return (max_key,degrees[max_key])
 
 # current_input: (array_of_values,array_of_regions)
 # current_output: {'if': [{value: region},{nother_value: its_region}], 'then': same_thing_as_if}
@@ -69,7 +69,7 @@ def generate_fuzzy_rule(inputs, outputs, regions, label=True, only_regions=False
             if label:
                 antecedents.append(determine_degrees_and_assign_and_label(i,regions[k],only_regions))
             else:
-                antecedents.append(determine_degrees_and_assign(j,regions[k],only_regions))
+                antecedents.append(determine_degrees_and_assign(i,regions[k],only_regions))
     for k,v in outputs.items():
         if label:
             consequents.append(determine_degrees_and_assign_and_label(v[0],regions[k],only_regions))
@@ -94,7 +94,7 @@ def generate_time_series_rule_base(input_data, output_data, variable_regions, wi
 def check_conflicting_rules(rule_base):
     rule_base_without_pair = []
     for r in rule_base:
-        rule_base_without_pair.append({'if': [rule[1] for rule in r['if']], 'then': [rule[1] for rule in r['then']]})
+        rule_base_without_pair.append({'if': [rule[0] for rule in r['if']], 'then': [rule[0] for rule in r['then']]})
     for i, rule in enumerate(rule_base_without_pair):
         for j, bule in enumerate(rule_base_without_pair):
             if(rule['if'] == bule['if']):
@@ -106,27 +106,29 @@ def check_conflicting_rules(rule_base):
 def clean_conflicting_rule_base(rule_base):
     rule_base_without_pair = []
     for r in rule_base:
-        rule_base_without_pair.append({'if': [rule[1] for rule in r['if']],'then': [rule[1] for rule in r['then']]})
+        rule_base_without_pair.append({'if': [rule[0] for rule in r['if']],'then': [rule[0] for rule in r['then']]})
     new_rule_base = []
+    done = []
     for i,rule in enumerate(rule_base_without_pair):
-        rule_with_max_degree = rule
-        for j,bule in enumerate(rule_base_without_pair):
-            if(rule['if'] == bule['if']):
-                deg_r, deg_b = 1,1
-                for k,ant in enumerate(rule['if']):
-                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
-                for k,con in enumerate(rule['then']):
-                        deg_r *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),con)
-                for k,ant in enumerate(bule['if']):
-                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['if'][k][0]]),ant)
-                for k,con in enumerate(bule['then']):
-                        deg_b *= fuzz.trimf(np.asarray([rule_base[i]['then'][k][0]]),con)
-                if deg_r >= deg_b:
-                    rule_with_max_degree = rule
-                else:
-                    rule_with_max_degree = bule
-        new_rule_base.append(rule_with_max_degree)
-        print(i)
+        if i not in done:
+            rule_with_max_degree = rule
+            for j,bule in enumerate(rule_base_without_pair):
+                if(rule['if'] == bule['if']):
+                    done.append(j)
+                    deg_r, deg_b = 1,1
+                    for k,ant in enumerate(rule['if']):
+                        deg_r *= rule_base[i]['if'][k][1]
+                    for k,con in enumerate(rule['then']):
+                        deg_r *= rule_base[i]['then'][k][1]
+                    for k,ant in enumerate(bule['if']):
+                        deg_b *= rule_base[i]['if'][k][1]
+                    for k,con in enumerate(bule['then']):
+                        deg_b *= rule_base[i]['then'][k][1]
+                    if deg_r >= deg_b:
+                        rule_with_max_degree = rule
+                    else:
+                        rule_with_max_degree = bule
+            new_rule_base.append(rule_with_max_degree)
     return new_rule_base
 
 
