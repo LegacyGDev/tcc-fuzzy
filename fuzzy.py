@@ -84,8 +84,6 @@ def generate_time_series_rule_base(input_data, output_data, variable_regions, wi
     bar = progressbar.ProgressBar(maxval=observations, widgets=['Wang-Mendel: ',progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
     bar.start()
     for i in range(window,observations-horizon,1):
-        #array_window = input_data[:,i-window:i]
-        #array_horizon = output_data[:,i]
         rule_base.append( generate_fuzzy_rule({key: value[:,i-window:i] for (key,value) in input_data.items()}, {key: value[:,i] for (key,value) in output_data.items()}, variable_regions, label, only_regions) )
         bar.update(i)
     bar.finish()
@@ -178,26 +176,20 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
             if j == len(high_mf)-1:
                 if rule['if'][j] == high_mf[j]:
                     aux[i].append(high_mf_degree[j])
-                    # result append
-                    result[0][rule['then'][0]] = max(aux[i])
-                    result[1][rule['then'][1]] = max(aux[i])
+                    result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                    result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                 elif rule['if'][j] == low_mf[j]:
                     aux[i].append(low_mf_degree[j])
-                    #result append
-                    result[0][rule['then'][0]] = max(aux[i])
-                    result[1][rule['then'][1]] = max(aux[i])
+                    result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                    result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                 else:
                     break
             if rule['if'][j] == high_mf[j]:
-                # add high_mf_degree[i] to a variable
                 aux[i].append(high_mf_degree[j])
             elif rule['if'][j] == low_mf[j]:
-                #add low_mf_degree[i] to a variable
                 aux[i].append(low_mf_degree[j])
             else:
                 break
-    print(aux[0])
-    sys.exit()
     # end
     #result = []
     #for i in range(len(rule_base[0]['then'])):
@@ -226,7 +218,6 @@ def time_series_fuzzy_inference(inputs, outputs_names, regions, rule_base, windo
     bar = progressbar.ProgressBar(maxval=observations, widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
     bar.start()
     for i in range(window,observations,1):
-        #array_window = inputs[:,i-window:i]
         output_data.append( fuzzy_inference({key: value[:,i-window:i] for (key,value) in inputs.items()}, outputs_names, regions, rule_base) )
         bar.update(i)
     bar.finish()
