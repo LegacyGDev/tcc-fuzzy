@@ -134,13 +134,13 @@ def clean_conflicting_rule_base(rule_base):
 
 def defuzz_coa(result, region):
     dividend = 0
-    for r in result:
+    for k,v in result.items():
         for reg in region:
-            if reg[0] == r[0]:
-                dividend += (r[1]*reg[1][1])
+            if reg[0] == k:
+                dividend += (v*reg[1][1])
     divisor = 0
-    for r in result:
-        divisor += r[1]
+    for v in result.values():
+        divisor += v
     return dividend/divisor
 
 
@@ -176,7 +176,6 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     for i, rule in enumerate(rule_base):
         for j in range(len(high_mf)):
             if j == len(high_mf)-1:
-                print(j)
                 if rule['if'][j] == high_mf[j]:
                     aux[i].append(high_mf_degree[j])
                     # result append
@@ -197,6 +196,8 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
                 aux[i].append(low_mf_degree[j])
             else:
                 break
+    print(aux[0])
+    sys.exit()
     # end
     #result = []
     #for i in range(len(rule_base[0]['then'])):
@@ -207,14 +208,14 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
     #            for i,con in enumerate(rule['then']):
     #                result[i].append( (con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)]))) )
     # aggregation
-    aggregated = []
-    for i,name in enumerate(outputs_names):
-        aggregated.append([])
-        for v in regions[name]:
-            aggregated[i].append( (v[0],max([r[1] for r in result[i] if r[0] == v[0]])) )
+    #aggregated = []
+    #for i,name in enumerate(outputs_names):
+    #    aggregated.append([])
+    #    for v in regions[name]:
+    #        aggregated[i].append( (v[0],max([r[1] for r in result[i] if r[0] == v[0]])) )
     # defuzz
     defuzzified_result = []
-    for i,agg in enumerate(aggregated):
+    for i,agg in enumerate(result):
         defuzzified_result.append(defuzz_coa(agg,regions[ outputs_names[i] ]))
     return defuzzified_result
 
@@ -222,11 +223,11 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
 def time_series_fuzzy_inference(inputs, outputs_names, regions, rule_base, window=3):
     output_data = []
     observations = len(next(iter(inputs.values()))[0])
-    #bar = progressbar.ProgressBar(maxval=observations, widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
-    #bar.start()
+    bar = progressbar.ProgressBar(maxval=observations, widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
+    bar.start()
     for i in range(window,observations,1):
         #array_window = inputs[:,i-window:i]
         output_data.append( fuzzy_inference({key: value[:,i-window:i] for (key,value) in inputs.items()}, outputs_names, regions, rule_base) )
-        #bar.update(i)
-    #bar.finish()
+        bar.update(i)
+    bar.finish()
     return output_data
