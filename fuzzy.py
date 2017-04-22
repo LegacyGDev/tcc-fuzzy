@@ -142,7 +142,7 @@ def defuzz_coa(result, region):
     return dividend/divisor
 
 
-def fuzzy_inference(inputs, outputs_names, regions, rule_base):
+def fuzzy_inference(inputs, outputs_names, regions, rule_base, inverse_inference=False):
     # fuzzify inputs
     fuzzified_inputs = []
     for k,v in inputs.items():
@@ -162,63 +162,51 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base):
             high_mf.append(f[1][0])
             high_mf_degree.append(f[1][1])
             low_mf.append(f[0][0])
-            low_mf_degree.append(f[0][1]) 
-    # inference
-    #print(high_mf)
-    #print(low_mf)
-    # new fuzzy inference
+            low_mf_degree.append(f[0][1])  
     result = []
     for i, name in enumerate(outputs_names):
         result.append({key: 0 for (key,value) in regions[name]})
-    aux = [[] for i in range(len(rule_base))]
-    for i, rule in enumerate(rule_base):
-        for j in range(len(high_mf)):
-            if j == len(high_mf)-1:
+    if inverse_inference:
+        aux = [[] for i in range(len(rule_base))]
+        for i, rule in enumerate(rule_base):
+            for j in range(len(high_mf)):
+                if j == len(high_mf)-1:
+                    if rule['if'][j] == high_mf[j]:
+                        aux[i].append(high_mf_degree[j])
+                        result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                        #result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
+                    elif rule['if'][j] == low_mf[j]:
+                        aux[i].append(low_mf_degree[j])
+                        result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                        #result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
+                    else:
+                        break
                 if rule['if'][j] == high_mf[j]:
                     aux[i].append(high_mf_degree[j])
-                    result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
-                    result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                 elif rule['if'][j] == low_mf[j]:
                     aux[i].append(low_mf_degree[j])
-                    result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
-                    result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                 else:
                     break
-            if rule['if'][j] == high_mf[j]:
-                aux[i].append(high_mf_degree[j])
-            elif rule['if'][j] == low_mf[j]:
-                aux[i].append(low_mf_degree[j])
-            else:
-                break
-    # end
-    #result = []
-    #for i in range(len(rule_base[0]['then'])):
-    #    result.append([])
-    #for choices in itertools.product([0,1],repeat=len(high_mf)):
-    #    for rule in rule_base:
-    #        if [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if']:
-    #            for i,con in enumerate(rule['then']):
-    #                result[i].append( (con,min(min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)]))) )
-    # aggregation
-    #aggregated = []
-    #for i,name in enumerate(outputs_names):
-    #    aggregated.append([])
-    #    for v in regions[name]:
-    #        aggregated[i].append( (v[0],max([r[1] for r in result[i] if r[0] == v[0]])) )
-    # defuzz
+    else:
+        for choices in itertools.product([0,1],repeat=len(high_mf)):
+            for rule in rule_base:
+                if [(high_mf[i] if choice else low_mf[i]) for i, choice in enumerate(choices)] == rule['if']:
+                    for i,con in enumerate(rule['then']):
+                        for k,name in enumerate(outputs_names):
+                            result[k][con] =  max(result[k][con],min([ (high_mf_degree[i] if choice else low_mf_degree[i]) for i,choice in enumerate(choices)]))
     defuzzified_result = []
     for i,agg in enumerate(result):
         defuzzified_result.append(defuzz_coa(agg,regions[ outputs_names[i] ]))
     return defuzzified_result
 
 
-def time_series_fuzzy_inference(inputs, outputs_names, regions, rule_base, window=3):
+def time_series_fuzzy_inference(inputs, outputs_names, regions, rule_base, window=3, inverse_inference=False):
     output_data = []
     observations = len(next(iter(inputs.values()))[0])
     bar = progressbar.ProgressBar(maxval=observations, widgets=['Fuzzy inference: ', progressbar.Bar('=','[',']'), ' ', progressbar.Percentage()])
     bar.start()
     for i in range(window,observations,1):
-        output_data.append( fuzzy_inference({key: value[:,i-window:i] for (key,value) in inputs.items()}, outputs_names, regions, rule_base) )
+        output_data.append( fuzzy_inference({key: value[:,i-window:i] for (key,value) in inputs.items()}, outputs_names, regions, rule_base, inverse_inference) )
         bar.update(i)
     bar.finish()
     return output_data
