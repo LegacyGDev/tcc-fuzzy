@@ -171,11 +171,15 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base, inverse_inference
                 if j == len(high_mf)-1:
                     if rule['if'][j] == high_mf[j]:
                         aux[i].append(high_mf_degree[j])
-                        result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                        for k,names in enumerate(outputs_names):
+                            result[k][rule['then'][k]] = max(min(aux[i]),result[k][rule['then'][k]])
+                        #result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
                         #result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                     elif rule['if'][j] == low_mf[j]:
                         aux[i].append(low_mf_degree[j])
-                        result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
+                        for k,names in enumerate(outputs_names):
+                            result[k][rule['then'][k]] = max(min(aux[i]),result[k][rule['then'][k]])
+                        #result[0][rule['then'][0]] = max(min(aux[i]),result[0][rule['then'][0]])
                         #result[1][rule['then'][1]] = max(min(aux[i]),result[1][rule['then'][1]])
                     else:
                         break
