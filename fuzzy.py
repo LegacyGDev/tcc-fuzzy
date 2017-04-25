@@ -6,6 +6,18 @@ import skfuzzy as fuzz
 # to be deleted
 import sys
 
+def trimf(x,fuzzy_set):
+    if x <= fuzzy_set[0]:
+        return 0
+    elif x >= fuzzy_set[2]:
+        return 0
+    elif x == fuzzy_set[1]:
+        return 1
+    elif fuzzy_set[0] < x < fuzzy_set[1]:
+        return (x - fuzzy_set[0])/(fuzzy_set[1] - fuzzy_set[0])
+    elif fuzzy_set[1] < x < fuzzy_set[2]:
+        return (fuzzy_set[2] - x)/(fuzzy_set[2] - fuzzy_set[1])
+
 
 def divide_into_fuzzy_regions(variable,n,safe_margin=0,label=True):
     regions = []
