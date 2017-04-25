@@ -132,18 +132,16 @@ def clean_conflicting_rule_base(rule_base):
 
 def defuzz_coa(result, region):
     dividend = 0
+    divisor = 0
     for k,v in result.items():
+        divisor += v
         for reg in region:
             if reg[0] == k:
                 dividend += (v*reg[1][1])
-    divisor = 0
-    for v in result.values():
-        divisor += v
     return dividend/divisor
 
 
 def fuzzy_inference(inputs, outputs_names, regions, rule_base, inverse_inference=False):
-    # fuzzify inputs
     fuzzified_inputs = []
     for k,v in inputs.items():
         for it in v[0]:
