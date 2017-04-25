@@ -1,7 +1,6 @@
 import numpy as np
 import progressbar
 import itertools
-import skfuzzy as fuzz
 
 # to be deleted
 import sys
@@ -54,7 +53,7 @@ def divide_into_fuzzy_regions(variable,n,safe_margin=0,label=True):
 def determine_degrees_and_assign(x,regions,only_regions=False):
     degrees = []
     for r in regions:
-        degrees.append(fuzz.trimf(np.asarray([x]),r[1]))
+        degrees.append(trimf(x,r[1]))
     max_value = regions[np.argmax(degrees)]
     if only_regions:
         return max_value
@@ -64,7 +63,7 @@ def determine_degrees_and_assign(x,regions,only_regions=False):
 def determine_degrees_and_assign_and_label(x,regions,only_regions=False):
     degrees = {}
     for r in regions:
-        degrees[r[0]] = fuzz.trimf(np.asarray([x]),r[1])
+        degrees[r[0]] = trimf(x,r[1])
     max_key = max(degrees, key=lambda k: degrees[k])
     if only_regions:
         return max_key
@@ -157,7 +156,7 @@ def fuzzy_inference(inputs, outputs_names, regions, rule_base, inverse_inference
     fuzzified_inputs = []
     for k,v in inputs.items():
         for it in v[0]:
-            fuzzified_inputs.append( [(reg[0],fuzz.trimf(np.asarray([it]),reg[1])) for reg in regions[k] if fuzz.trimf(np.asarray([it]),reg[1]) != 0] )
+            fuzzified_inputs.append( [(reg[0],trimf(it,reg[1])) for reg in regions[k] if trimf(it,reg[1]) != 0] )
     high_mf = []
     high_mf_degree = []
     low_mf = []
