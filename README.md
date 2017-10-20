@@ -1,7 +1,7 @@
 TTC-Fuzzy!
 ---
 
-Implementation of **Fuzzy Algorithms** using [**SciKit**](http://scikit-learn.org/stable/).
+### Implementation of **Fuzzy Algorithms** using [**SciKit**](http://scikit-learn.org/stable/).
 
 Fuzzy Algorithms are algorithms that use [**fuzzy logic**](https://en.wikipedia.org/wiki/Fuzzy_logic) to gain results based on degree of certainty rather than true/false relations.
 
