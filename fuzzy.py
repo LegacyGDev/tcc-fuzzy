@@ -2,7 +2,7 @@ import numpy as np
 import progressbar
 import itertools
 
-# to be deleted
+# To be deleted
 import sys
 
 def trimf(x,fuzzy_set):
